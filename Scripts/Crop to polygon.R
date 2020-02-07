@@ -43,7 +43,7 @@ crop(sp_gr, sp_pol) %>% plot()
 mask(sp_ra, sp_pol, mask = ) %>% plot()
 
 # Disaggregare, then mask
-disaggregate(sp_ra, fact = 2500) %>% 
+disaggregate(sp_ra, fact = 25) %>% 
   mask(sp_pol) %>% 
   plot()
 
@@ -64,6 +64,6 @@ ggplot(dat_t, aes(x, y)) +
 plot(sp_ra, axes = T)
 sp_pol2 <- rasterToPolygons(sp_ra)
 
-plot(sp_pol2)
+plot(sp_pol2, col = rgb(unlist(sp_pol2@data)/250, 0.5, 0.7))
 
 library(sf)
