@@ -38,12 +38,12 @@ sp_pol <- Polygons(list(sp_pol), "sp1")
 sp_pol <- SpatialPolygons(list(sp_pol))
 
 # Cropping and masking
-crop(sp_gr, sp_pol) %>% plot()
+# crop(sp_gr, sp_pol) %>% plot()
 
 mask(sp_ra, sp_pol, mask = ) %>% plot()
 
 # Disaggregare, then mask
-disaggregate(sp_ra, fact = 25) %>% 
+disaggregate(sp_ra, fact = 2500) %>% 
   mask(sp_pol) %>% 
   plot()
 
@@ -60,10 +60,22 @@ ggplot(dat_t, aes(x, y)) +
   geom_point(col = rgb(dat_t$vals/max(dat_t$vals), 0, 0), size = 3) +
   coord_equal()
 
-# Transform raster to shape, then crop/mask
+# Transform raster to shape, then raster::intersect
 plot(sp_ra, axes = T)
 sp_pol2 <- rasterToPolygons(sp_ra)
 
 plot(sp_pol2, col = rgb(unlist(sp_pol2@data)/250, 0.5, 0.7))
 
-library(sf)
+intersect(sp_pol2, sp_pol) -> sp_int
+sp_int@polygons %>% length()
+
+extract_pol_at_i <- function(x){sp_int@polygons[[x]]@Polygons[[1]]@coords}
+dat_pol_gg <- data.frame()
+for(i in 1:length(sp_int@polygons)){
+  data.frame(extract_pol_at_i(i), id = i) %>% 
+    rbind(dat_pol_gg) -> dat_pol_gg
+}
+dat_pol_gg %>% dim()
+
+g <- ggplot(dat_pol_gg, aes(x, y, fill = as.character(id))) + geom_polygon() + coord_equal()
+ggsave("Output/200208_intersection.pdf", g)
