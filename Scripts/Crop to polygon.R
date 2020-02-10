@@ -43,7 +43,7 @@ sp_pol <- SpatialPolygons(list(sp_pol))
 mask(sp_ra, sp_pol, mask = ) %>% plot()
 
 # Disaggregare, then mask
-disaggregate(sp_ra, fact = 2500) %>% 
+disaggregate(sp_ra, fact = 250) %>% 
   mask(sp_pol) %>% 
   plot()
 
@@ -66,7 +66,10 @@ sp_pol2 <- rasterToPolygons(sp_ra)
 
 plot(sp_pol2, col = rgb(unlist(sp_pol2@data)/250, 0.5, 0.7))
 
-intersect(sp_pol2, sp_pol) -> sp_int
+raster::intersect(sp_pol2, sp_pol) -> sp_int
+plot(sp_pol2)
+plot(sp_pol)
+plot(sp_int)
 sp_int@polygons %>% length()
 
 extract_pol_at_i <- function(x){sp_int@polygons[[x]]@Polygons[[1]]@coords}
