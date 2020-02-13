@@ -9,47 +9,34 @@ library(magrittr)
 library(ggplot2)
 
 # Import (jpeg) picture ----
-img_path <- "Example pictures/Kurre5.jpg"
+img_path <- "Example pictures/Kurre6.jpg"
 img <- readGDAL(img_path)
-img@data <- cbind(data.frame(id = 1:dim(img@data)[1]), img@data)
-# class(img)
-# SpatialPolygons(img) # Error, not list
-img_ra <- raster(img)
-extent(img_ra) <- extent(c(0,1,0,1))
-img_sp <- rasterToPolygons(img_ra)
-img_sp@data <- img@data
+
+img_sf <- st_as_sf(img)
+img_sf <- img_sf %>% mutate(geometry = geometry / matrix(st_bbox(img_sf)[3:4], 1))
+
+g1 <- ggplot() + 
+  geom_sf(data =img_sf, col = rgb(img_sf$band1/360, img_sf$band2/360, img_sf$band3/360), size = 3)
+
+g1
 
 # Construct polygon in [0,1] x [0,1] as spatial object ----
-dat_po <- data.frame(x = c(0,0.1,0.5,0.8,1,0),
-                     y = c(0,0.5,1,0.4,0,0))
+dat_po <- data.frame(x = c(0,0.1,0.5,0.8,1,0), y = c(0,0.5,1,0.4,0,0))
 
-#st_po <- st_polygon(list(as.matrix(dat_po))) %>% plot()
+st_po <- st_polygon(list(as.matrix(dat_po)))
 
-# sp_po <- Polygon(dat_po)
-# sp_po <- Polygons(list(sp_po), "sp1")
-# sp_po <- SpatialPolygons(list(sp_po))
+g2 <- ggplot() + geom_sf(data = st_po, size = 3)
+g2
 
 # Intersect raster and polygon ----
-raster::intersect(img_sp, sp_po) -> sp_int
-dt_sf <- st_as_sf(sp_int)
+img_int <- sf::st_intersection(img_sf, st_po) # Same effect as previous use of over (i.e. still points)
+plot(img_int)
 
-ggplot() + 
-  geom_sf(data = dt_sf, fill = rgb(dt_sf$band1/360, dt_sf$band3/360, dt_sf$band3/360), col = NA, alpha = 1)
+# raster::intersect(img_sp, st_po) -> sp_int
+# dt_sf <- st_as_sf(sp_int)
 
-# Over? ----
-dat <- cbind(expand.grid(x = 1:extent(img)[2], y = extent(img)[4]:1), img@data)
-dat$include <- over(img, sp_po)
+g3 <- ggplot() + 
+  geom_sf(data = img_int, col = rgb(img_int$band1/360, img_int$band3/360, img_int$band3/360), alpha = 1, size = 3)
+g3
 
-dat %>% 
-  filter(!is.na(dat$include)) -> dat_t 
-
-g1 <- ggplot(dat_t, aes(x, y)) + 
-  geom_point(col = rgb(dat_t$band1/360, dat_t$band2/360, dat_t$band3/360)) +
-  coord_equal()
-
-g2 <- ggplot(dat_t, aes(xmin = x, xmax = x + 1, ymin = y, ymax = y + 1)) +
-  geom_rect(fill = rgb(dat_t$band1/360, dat_t$band2/360, dat_t$band3/360)) + 
-  ylab("y") + xlab("x") +
-  coord_equal()
-
-gridExtra::grid.arrange(g1, g2, ncol = 2)
+gridExtra::grid.arrange(g1, g2, g3, ncol = 3)
