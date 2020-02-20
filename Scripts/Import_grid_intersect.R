@@ -23,7 +23,7 @@ g1 <- ggplot(img_sf) +
   geom_sf(fill = rgb(img_sf$band1/360, img_sf$band2/360, img_sf$band3/360), col = NA)
 
 # Circle
-sp_circle <- data.frame(co = exp(1i * seq(0, 2*pi, length.out = 360))) %>% 
+sp_circle <- data.frame(co = exp(1i * seq(0, 2*pi, length.out = 7))) %>% 
   mutate(x = Re(co), y = Im(co))
 sp_circle[dim(sp_circle)[1],] <- sp_circle[1,]
 sp_pol <- st_polygon(list(as.matrix(sp_circle[,2:3])))
@@ -41,7 +41,15 @@ g3 <- ggplot(img_sf_int) +
   geom_sf(fill = rgb(img_sf_int$band1, img_sf_int$band2, img_sf_int$band3),
           col = NA) +
   xlim(0, bb$xmax) + ylim(0, bb$ymax)
+g3
 
-library(patchwork)
-g4 <- g1 / g2 | g3
-ggsave("Output/Intersecting_squirrel2.png", g4, width = 8, height = 5.5)
+ggplot() + 
+  geom_sf(data = img_sf_int, fill = rgb(img_sf_int$band1, img_sf_int$band2, img_sf_int$band3),
+          col = NA) +
+  geom_sf(data = sp_pol, fill = rgb(1, 1, 1, 0.75), col = NA) +
+  theme_bw()
+  
+
+# library(patchwork)
+# g4 <- g1 / g2 | g3
+# ggsave("Output/Intersecting_squirrel2.png", g4, width = 8, height = 5.5)
