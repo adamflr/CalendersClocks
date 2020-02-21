@@ -24,16 +24,19 @@ set_img_in_polygon <- function(img_path, polygon){
   
   # Extract borders of polygon and transform image to correspond
   bbox_pol <- st_bbox(polygon)
+  cent_pol <- matrix(c(bbox_pol[1] + bbox_pol[3], bbox_pol[2] + bbox_pol[4]), 1, 2)/ 2
+  hw_ratio_pol <- (bbox_pol[4] - bbox_pol[2]) / (bbox_pol[3] - bbox_pol[1])
+  
   bbox_img <- st_bbox(img_sf)
-  pol_hw_ratio <- (bbox_pol[3] - bbox_pol[1]) / (bbox_pol[3] - bbox_pol[1])
-  img_hw_ratio <- (bbox_img[3] - bbox_img[1]) / (bbox_img[3] - bbox_img[1])
-  if(pol_hw_ratio > img_hw_ratio){
-    img_sf <- img_sf %>% mutate(geometry = geometry - matrix(c(bbox_img[1] + bbox_img[3], bbox_img[2] + bbox_img[4]), 1, 2)/ 2,
-                                geometry = geometry * (bbox_pol[4] - bbox_pol[2]) / (bbox_img[4] - bbox_img[2]),
-                                geometry = geometry + st_coordinates(st_centroid(polygon)))} else{
-                                  img_sf <- img_sf %>% mutate(geometry = geometry - matrix(c(bbox_img[1] + bbox_img[3], bbox_img[2] + bbox_img[4]), 1, 2)/ 2,
-                                                              geometry = geometry * (bbox_pol[3] - bbox_pol[1]) / (bbox_img[3] - bbox_img[1]),
-                                                              geometry = geometry + st_coordinates(st_centroid(polygon)))}
+  cent_img <- matrix(c(bbox_img[1] + bbox_img[3], bbox_img[2] + bbox_img[4]), 1, 2)/ 2
+  hw_ratio_img <- (bbox_img[4] - bbox_img[2]) / (bbox_img[3] - bbox_img[1])
+  
+  scaling <- ifelse(hw_ratio_pol > hw_ratio_img, 
+                    (bbox_pol[4] - bbox_pol[2]) / (bbox_img[4] - bbox_img[2]),
+                    (bbox_pol[3] - bbox_pol[1]) / (bbox_img[3] - bbox_img[1]))
+  img_sf <- img_sf %>% mutate(geometry = geometry - cent_img,
+                              geometry = geometry * scaling,
+                              geometry = geometry + cent_pol)
   
   # Intersect polygon and image
   st_intersection(img_sf, polygon) %>% 
@@ -43,4 +46,5 @@ set_img_in_polygon <- function(img_path, polygon){
   img_sf_int
 }
 
-set_img_in_polygon("Example pictures/Kurre6.jpg", sp_pol * matrix(c(2, 1), 1, 2)) %>% plot()
+pol <- st_polygon(list(matrix(c(0,0,1,0,1,1,0,1,0,0), ncol = 2, byrow = T)))
+set_img_in_polygon("Example pictures/Kurre6.jpg", pol * matrix(c(1, 5), 1, 2)) %>% plot()
